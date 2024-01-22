@@ -20,55 +20,67 @@
             </form>
 
             <div class="weather-results" id="weather-results">
-                <!-- Weather data will be dynamically added here -->
             </div>
 
             <div class="nasa-results" id="nasa-results">
-                <!-- NASA data will be dynamically added here -->
             </div>
-
-            <div class="covid19-results" id="covid19-results">
-                <!-- COVID-19 data will be dynamically added here -->
+            <div class="exchange-rates" id="exchange-rates-results">
             </div>
         </main>
 
         <footer>
             <p>Created by Altynbek</p>
-            <p>from group SE-2205</p>
+            <p>from group SE-2203</p>
         </footer>
 
         <script>
-            document.addEventListener('DOMContentLoaded', function () {
-                const weatherForm = document.querySelector('.weather-form');
-                const weatherResults = document.getElementById('weather-results');
-                const nasaResults = document.getElementById('nasa-results');
-                const covid19Results = document.getElementById('covid19-results');
+                document.addEventListener('DOMContentLoaded', function () {
+            const weatherForm = document.querySelector('.weather-form');
+            const weatherResults = document.getElementById('weather-results');
+            const nasaResults = document.getElementById('nasa-results');
+            const exchangeRatesResults = document.getElementById('exchange-rates-results');
 
-                weatherForm.addEventListener('submit', function (event) {
-                    event.preventDefault();
-                    const city = document.getElementById('city').value;
-                    
-                    fetch(`/weather?city=${city}`)
-                        .then(response => response.text())
-                        .then(data => {
-                            weatherResults.innerHTML = data;
-                        })
-                        .catch(error => console.error('Error fetching weather data:', error));
+            weatherForm.addEventListener('submit', function (event) {
+                event.preventDefault();
+                const city = document.getElementById('city').value;
 
-                    fetch(`/nasa?city=${city}`)
-                        .then(response => response.json())
-                        .then(data => {
-                            nasaResults.innerHTML = `<h2>${data.title}</h2><p>${data.explanation}</p><img src="${data.imageUrl}" alt="NASA Image">`;
-                        })
-                        .catch(error => console.error('Error fetching NASA data:', error));
+                // Fetch weather data
+                fetch(`/weather?city=${city}`)
+                    .then(response => response.text())
+                    .then(data => {
+                        weatherResults.innerHTML = data;
+                    })
+                    .catch(error => console.error('Error fetching weather data:', error));
 
-                    fetch(`/covid19?city=${city}`)
-                        .then(response => response.json())
-                        .then(data => {
-                            covid19Results.innerHTML = `<h2>COVID-19 Data</h2><p>Confirmed Cases: ${data.confirmedCases}</p><p>Deaths: ${data.deaths}</p><p>Recovered: ${data.recovered}</p>`;
-                        })
-                        .catch(error => console.error('Error fetching COVID-19 data:', error));
-                });
+                // Fetch NASA data
+                fetch(`/nasa?city=${city}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        nasaResults.innerHTML = `<h2>${data.title}</h2><p>${data.explanation}</p><img style="width: 100%" src="${data.url}" alt="NASA Image">`;
+                    })
+                    .catch(error => console.error('Error fetching NASA data:', error));
+
+                // Fetch exchange rates
+                fetch(`/exchange-rates`)
+                    .then(response => response.json())
+                    .then(data => {
+                        displayExchangeRates(data);
+                    })
+                    .catch(error => console.error('Error fetching exchange rates:', error));
+            });
+
+            function displayExchangeRates(data) {
+                exchangeRatesResults.innerHTML = `<h2>USD Exchange Rates</h2>`;
+                const ratesList = document.createElement('ul');
+
+                for (const [currency, rate] of Object.entries(data.rates)) {
+                    const listItem = document.createElement('li');
+                    listItem.innerHTML = `<strong>${currency}:</strong> ${rate}`;
+                    ratesList.appendChild(listItem);
+                    }
+
+                exchangeRatesResults.appendChild(ratesList);
+                }
             });
         </script>
     </div>

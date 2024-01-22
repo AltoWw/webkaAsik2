@@ -6,7 +6,7 @@ const geolib = require("geolib");
 const app = express();
 const port = 3000;
 const additionalApiKey1 = '28sNWPHuFL8zTXysMbFACrcJ9MelAkAL0iMx7GMV'; 
-const additionalApiKey2 = 'b16c7e5960msh46db22ac2cd7ea3p144a7bjsnf7141b265e74'; 
+
 
 app.use(express.static("public"));
 
@@ -19,8 +19,6 @@ app.get("/weather", function (req, res) {
     const url = `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=315ca2c3d000650c533c858e43fc4781&units=metric`;
 
     https.get(url, function (response) {
-        console.log(response.statusCode);
-
         response.on("data", function (data) {
             const weatherdata = JSON.parse(data);
             const temp = weatherdata.main.temp;
@@ -36,7 +34,7 @@ app.get("/weather", function (req, res) {
     });
 });
 
-app.get("/nasa", function (req, res) {
+app.get("/nasa", async function (req, res) {
     const city = req.query.city;
 
     if (!city) {
@@ -44,36 +42,44 @@ app.get("/nasa", function (req, res) {
         return;
     }
 
- 
+    const data = await getNASAData(city);
+    res.status(200).send(data);
 });
 
-app.get("/covid19", function (req, res) {
-    const city = req.query.city;
-
-    if (!city) {
-        res.status(400).send("Bad Request: City parameter is missing");
-        return;
+app.get("/exchange-rates", async function (req, res) {
+    try {
+        const rates = await getExchangeRates();
+        res.status(200).json(rates);
+    } catch (error) {
+        res.status(500).send("Internal Server Error");
     }
-
 });
 
+async function getExchangeRates() {
+    const apiKey = 'fbabbaee95c71e321bacdc53';
+    const url = `https://open.er-api.com/v6/latest`;
 
-function getNASAData(city) {
+    try {
+        console.log('Before request');
+        const response = await axios.get(url, {
+            params: {
+                apiKey: apiKey,
+            },
+        });
+        console.log('After request');
+        return response.data;
+    } catch (error) {
+        console.error("Error fetching exchange rates:", error);
+        throw error;
+    }
+}
+
+async function getNASAData(city) {
     const url = `https://api.nasa.gov/planetary/apod?api_key=${additionalApiKey1}&date=2024-01-24`;
-    return axios.get(url)
+    return await axios.get(url)
         .then(response => response.data)
         .catch(error => {
             console.error("Error fetching NASA data:", error);
-            throw error;  
-        });
-}
-
-function getCOVID19Data(city) {
-    const url = `https://api.covid19api.com/total/country/${city}`;
-    return axios.get(url)
-        .then(response => response.data)
-        .catch(error => {
-            console.error("Error fetching COVID-19 data:", error);
             throw error;  
         });
 }

@@ -1,6 +1,6 @@
 # About the project
 
-This project is a simple web application that provides weather information, NASA data, and COVID-19 statistics based on a user-entered city. The application is built using Node.js, Express, Axios, and Geolib libraries.
+This project is a simple web application that provides weather information, NASA data statistics based on a user-entered city. Also we have USD Exchange Rates statistics. The application is built using Node.js, Express, Axios, and Geolib libraries.
 
 # How to run the project
 
