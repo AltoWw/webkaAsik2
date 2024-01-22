@@ -1,17 +1,14 @@
 const express = require("express");
 const https = require("https");
-const axios = require("axios"); 
-const geolib = require("geolib"); 
+const axios = require("axios");
+const geolib = require("geolib");
 
 const app = express();
 const port = 3000;
+const additionalApiKey1 = '28sNWPHuFL8zTXysMbFACrcJ9MelAkAL0iMx7GMV'; 
+const additionalApiKey2 = 'b16c7e5960msh46db22ac2cd7ea3p144a7bjsnf7141b265e74'; 
 
 app.use(express.static("public"));
-
-const openWeatherApiKey = 'a61f6654cdbd955978cfe70ba1df96ac';
-
-const additionalApiKey1 = "YOUR_ADDITIONAL_API_KEY_1";
-const additionalApiKey2 = "YOUR_ADDITIONAL_API_KEY_2";
 
 app.get("/", function (req, res) {
     res.sendFile(__dirname + "/public/index.html");
@@ -19,96 +16,69 @@ app.get("/", function (req, res) {
 
 app.get("/weather", function (req, res) {
     const city = req.query.city;
+    const url = `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=315ca2c3d000650c533c858e43fc4781&units=metric`;
 
-    getWeatherData(city)
-        .then(weatherData => {
-            const additionalData1Promise = getAdditionalData1(city);
-            const additionalData2Promise = getAdditionalData2(city);
+    https.get(url, function (response) {
+        console.log(response.statusCode);
 
-            Promise.all([additionalData1Promise, additionalData2Promise])
-                .then(([additionalData1, additionalData2]) => {
-                    res.json({
-                        weather: weatherData,
-                        additional1: additionalData1,
-                        additional2: additionalData2
-                    });
-                })
-                .catch(error => {
-                    console.error("Error fetching additional data:", error);
-                    res.status(500).send("Internal Server Error");
-                });
-        })
-        .catch(error => {
-            console.error("Error fetching weather data:", error);
-            res.status(500).send("Internal Server Error");
-        });
-});
+        response.on("data", function (data) {
+            const weatherdata = JSON.parse(data);
+            const temp = weatherdata.main.temp;
+            const description = weatherdata.weather[0].description;
+            const icon = weatherdata.weather[0].icon;
+            const imgURL = `https://openweathermap.org/img/wn/${icon}@2x.png`;
 
-app.get("/geolocation", function (req, res) {
-    const city = req.query.city;
-
-    getCoordinates(city)
-        .then(coordinates => {
-            res.json({ coordinates });
-        })
-        .catch(error => {
-            console.error("Error fetching coordinates:", error);
-            res.status(500).send("Internal Server Error");
-        });
-});
-
-app.listen(port, function () {
-    console.log(`Server is running on port ${port}`);
-});
-
-function getWeatherData(city) {
-    const url = `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${openWeatherApiKey}&units=metric`;
-
-    return new Promise((resolve, reject) => {
-        https.get(url, function (response) {
-            let data = "";
-            response.on("data", chunk => {
-                data += chunk;
-            });
-
-            response.on("end", () => {
-                const weatherData = JSON.parse(data);
-                resolve(weatherData);
-            });
-
-            response.on("error", error => {
-                reject(error);
-            });
+            res.write(`<h1>Temperature is ${temp} Celsius in ${city}</h1>`);
+            res.write(`<h2>The weather currently is ${description}</h2>`);
+            res.write(`<img src=${imgURL}>`);
+            res.send();
         });
     });
-}
+});
 
-function getAdditionalData1(city) {
-    const url = `https://api.example.com/data1?city=${city}&apikey=${additionalApiKey1}`;
+app.get("/nasa", function (req, res) {
+    const city = req.query.city;
 
+    if (!city) {
+        res.status(400).send("Bad Request: City parameter is missing");
+        return;
+    }
+
+ 
+});
+
+app.get("/covid19", function (req, res) {
+    const city = req.query.city;
+
+    if (!city) {
+        res.status(400).send("Bad Request: City parameter is missing");
+        return;
+    }
+
+});
+
+
+function getNASAData(city) {
+    const url = `https://api.nasa.gov/planetary/apod?api_key=${additionalApiKey1}&date=2024-01-24`;
     return axios.get(url)
         .then(response => response.data)
         .catch(error => {
-            throw error;
+            console.error("Error fetching NASA data:", error);
+            throw error;  
         });
 }
 
-function getAdditionalData2(city) {
-    const url = `https://api.example.com/data2?city=${city}&apikey=${additionalApiKey2}`;
-
+function getCOVID19Data(city) {
+    const url = `https://api.covid19api.com/total/country/${city}`;
     return axios.get(url)
         .then(response => response.data)
         .catch(error => {
-            throw error;
+            console.error("Error fetching COVID-19 data:", error);
+            throw error;  
         });
 }
 
-function getCoordinates(city) {
-    const url = `https://geocoding-api.com?city=${city}`;
 
-    return axios.get(url)
-        .then(response => response.data.coordinates)
-        .catch(error => {
-            throw error;
-        });
-}
+app.listen(port, function(){
+    console.log(`Server is running on port ${port}`);
+});
